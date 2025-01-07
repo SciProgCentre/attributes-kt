@@ -93,18 +93,4 @@ with(matrixScope) {
 
 It is possible to simplify the work with polymorphic attributes by implementing type erasure for type arguments, but it will violate structural equality guarantees. Polymorphic attributes are work in progress and could change in the future.
 
-## Artifact:
-
-The Maven coordinates of this project are `space.kscience:attributes-kt:0.3.0`.
-
-**Gradle Kotlin DSL:**
-```kotlin
-repositories {
-    maven("https://repo.kotlin.link")
-    mavenCentral()
-}
-
-dependencies {
-    implementation("space.kscience:attributes-kt:0.3.0")
-}
-```
+${artifact}
