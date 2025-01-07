@@ -1,3 +1,6 @@
+![Maven Central Version](https://img.shields.io/maven-central/v/space.kscience/attributes-kt)
+
+
 # Attributes-kt
 
 This is a small multiplatform library dedicated to typed attribute containers inspired by kotlinx-coroutines contexts.
