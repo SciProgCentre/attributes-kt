@@ -23,6 +23,11 @@ public interface Attributes {
     public val content: Map<out Attribute<*>, Any?>
 
     /**
+     * Attribute keys contained in this [Attributes]
+     */
+    public val keys: Set<Attribute<*>> get() = content.keys
+
+    /**
      * Provide an attribute value. Return null if an attribute is not present or if its value is null.
      */
     @Suppress("UNCHECKED_CAST")
@@ -50,11 +55,6 @@ public interface Attributes {
             a1.keys == a2.keys && a1.keys.all { a1[it] == a2[it] }
     }
 }
-
-/**
- * Attribute keys contained in this [Attributes]
- */
-public val Attributes.keys: Set<Attribute<*>> get() = content.keys
 
 /**
  * Implementation of attributes based on a read-only [Map]

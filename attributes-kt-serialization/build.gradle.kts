@@ -21,5 +21,5 @@ kscience {
 }
 
 readme {
-    maturity = space.kscience.gradle.Maturity.PROTOTYPE
+    maturity = space.kscience.gradle.Maturity.EXPERIMENTAL
 }
