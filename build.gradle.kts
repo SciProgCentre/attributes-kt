@@ -18,7 +18,7 @@ kscience {
     jvm()
     js()
     native()
-    wasm()
+    wasmJs()
 }
 
 ksciencePublish {
