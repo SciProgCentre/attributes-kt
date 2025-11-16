@@ -21,13 +21,13 @@ kscience {
     wasmJs()
 }
 
-ksciencePublish {
+kscienceProject {
     pom("https://git.sciprog.center/kscience/attributes-kt") {
         useApache2Licence()
         useSPCTeam()
     }
-    repository("spc", "https://maven.sciprog.center/kscience")
-    central()
+    publishTo("spc", "https://maven.sciprog.center/kscience")
+    publishToCentral()
 }
 
 readme {

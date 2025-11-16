@@ -10,7 +10,7 @@ package space.kscience.attributes
  *
  * The following contracts are in place for this class:
  * * the type of item provided always the same the type-parameter of the attribute;
- * * content is immutable;
+ * * content composition immutable (the same objects always correspond to the same keys, not guarantees about the content);
  * * structural equality.
  *
  * It is not recommended to implement this interface in application level code to avoid breaking its contract.
@@ -53,6 +53,8 @@ public interface Attributes {
          */
         public fun equals(a1: Attributes, a2: Attributes): Boolean =
             a1.keys == a2.keys && a1.keys.all { a1[it] == a2[it] }
+
+
     }
 }
 
@@ -60,6 +62,7 @@ public interface Attributes {
  * Implementation of attributes based on a read-only [Map]
  */
 @OptIn(UnsafeAPI::class)
+@PublishedApi
 internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) : Attributes {
     override fun toString(): String = "Attributes(value=${content.entries})"
     override fun equals(other: Any?): Boolean = other is Attributes && Attributes.equals(this, other)
@@ -109,7 +112,7 @@ public fun <A : Attribute<Unit>> Attributes.withFlag(attribute: A): Attributes =
 /**
  * Create a new [Attributes] by modifying the current one.
  */
-public fun <O> Attributes.modified(block: AttributesBuilder<O>.() -> Unit): Attributes = Attributes<O> {
+public inline fun <O> Attributes.modified(block: AttributesBuilder<O>.() -> Unit): Attributes = Attributes<O> {
     putFrom(this@modified)
     block()
 }

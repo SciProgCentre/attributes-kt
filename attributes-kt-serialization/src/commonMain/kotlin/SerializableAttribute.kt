@@ -1,7 +1,6 @@
 package space.kscience.attributes.serialization
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -53,6 +52,7 @@ public class AttributesSerializer(
                     Json { serializersModule = encoder.serializersModule }
                 }
 
+                @Suppress("UNCHECKED_CAST")
                 put(
                     serializableKey.serialId,
                     json.encodeToJsonElement(serializableKey.serializer as KSerializer<Any?>, value)

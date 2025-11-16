@@ -21,6 +21,6 @@ public interface MutableAttributeContainer : AttributeContainer {
 }
 
 @UnstableAPI
-public fun <O : MutableAttributeContainer> O.attributes(builder: AttributesBuilder<O>.() -> Unit) {
+public inline fun <O : MutableAttributeContainer> O.attributes(builder: AttributesBuilder<O>.() -> Unit) {
     attributes = attributes.modified(builder)
 }
