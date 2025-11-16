@@ -9,7 +9,7 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.kotlin.link")
-        mavenLocal()
+//        mavenLocal()
     }
 
     plugins {
@@ -26,7 +26,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.kotlin.link")
-        mavenLocal()
+//        mavenLocal()
     }
 
     versionCatalogs {
