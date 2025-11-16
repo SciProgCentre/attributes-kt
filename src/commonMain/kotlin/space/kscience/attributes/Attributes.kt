@@ -54,7 +54,14 @@ public interface Attributes {
         public fun equals(a1: Attributes, a2: Attributes): Boolean =
             a1.keys == a2.keys && a1.keys.all { a1[it] == a2[it] }
 
-
+        /**
+         * Create [Attributes] from a given [content] map.
+         * This method does not check the validity of the provided map, so it should be used with care.
+         *
+         * User **must** ensure that each key contains a value of the same type as referenced by the key.
+         */
+        @UnsafeAPI
+        public fun unsafe(content: Map<out Attribute<*>, Any?>): Attributes = AttributesMap(content)
     }
 }
 
