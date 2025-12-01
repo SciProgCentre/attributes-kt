@@ -25,7 +25,7 @@ public class AttributesBuilder<out O> internal constructor()  {
     public fun attributes(): Attributes = AttributesMap(HashMap(content))
 
     @JvmName("set")
-    public fun <V> put(attribute: Attribute<V>, value: V?) {
+    public fun <V> put(attribute: Attribute<in V>, value: V?) {
         if (value == null) {
             map.remove(attribute)
         } else {
@@ -33,12 +33,24 @@ public class AttributesBuilder<out O> internal constructor()  {
         }
     }
 
-    public infix fun <V> Attribute<V>.put(value: V?) {
+    public infix fun <V> Attribute<in V>.put(value: V?) {
         put(this, value)
     }
 
-    public operator fun <V> Attribute<V>.invoke(value: V?) {
+    public operator fun <V> Attribute<in V>.invoke(value: V?) {
         put(this, value)
+    }
+    
+    public fun <V> put(attributes: Set<Attribute<in V>>, value: V) {
+        for (attribute in attributes) put(attribute, value)
+    }
+    
+    public infix fun <V> Set<Attribute<in V>>.put(value: V) {
+        for (attribute in this) attribute put value
+    }
+    
+    public operator fun <V> Set<Attribute<in V>>.invoke(value: V) {
+        for (attribute in this) attribute(value)
     }
 
     /**

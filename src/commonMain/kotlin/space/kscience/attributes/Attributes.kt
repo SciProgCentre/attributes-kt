@@ -31,7 +31,7 @@ public interface Attributes {
      * Provide an attribute value. Return null if an attribute is not present or if its value is null.
      */
     @Suppress("UNCHECKED_CAST")
-    public operator fun <T> get(attribute: Attribute<T>): T? = content[attribute] as? T
+    public operator fun <T> get(attribute: Attribute<out T>): T? = content[attribute] as? T
 
     override fun toString(): String
     override fun equals(other: Any?): Boolean
