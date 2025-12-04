@@ -26,10 +26,33 @@ public class AttributesBuilder<out O> internal constructor()  {
 
     @JvmName("set")
     public fun <V> put(attribute: Attribute<in V>, value: V?) {
-        if (value == null) {
-            map.remove(attribute)
-        } else {
-            map[attribute] = value
+        val allValueInferences = buildMap<Attribute<*>, (() -> Any?)?> {
+            val attributesToCheck = mutableMapOf<Attribute<*>, (() -> Any?)?>(attribute to { value })
+            while (attributesToCheck.isNotEmpty()) {
+                val (nextAttribute, nextValue) = attributesToCheck.entries.first()
+                attributesToCheck.remove(nextAttribute)
+                this[nextAttribute] = nextValue
+                for ((newAttribute, newValue) in nextAttribute.implications) {
+                    @Suppress("UNCHECKED_CAST")
+                    newValue as (Any?) -> Any?
+                    when (newAttribute) {
+                        in this -> this[newAttribute] = null
+                        in attributesToCheck -> attributesToCheck[newAttribute] = null
+                        else -> attributesToCheck[newAttribute] = nextValue?.let { { newValue(it()) } }
+                    }
+                }
+            }
+        }
+        for ((attribute, inference) in allValueInferences) {
+            if (inference == null && attribute !in map) error("Attribute $attribute was implied several times and it is not put into the attributes container")
+            if (inference != null) {
+                val value = inference()
+                if (value == null) {
+                    map.remove(attribute)
+                } else {
+                    map[attribute] = value
+                }
+            }
         }
     }
 
@@ -39,18 +62,6 @@ public class AttributesBuilder<out O> internal constructor()  {
 
     public operator fun <V> Attribute<in V>.invoke(value: V?) {
         put(this, value)
-    }
-    
-    public fun <V> put(attributes: Set<Attribute<in V>>, value: V) {
-        for (attribute in attributes) put(attribute, value)
-    }
-    
-    public infix fun <V> Set<Attribute<in V>>.put(value: V) {
-        for (attribute in this) attribute put value
-    }
-    
-    public operator fun <V> Set<Attribute<in V>>.invoke(value: V) {
-        for (attribute in this) attribute(value)
     }
 
     /**
