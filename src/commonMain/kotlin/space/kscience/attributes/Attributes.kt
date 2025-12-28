@@ -9,7 +9,7 @@ package space.kscience.attributes
  * A set of attributes. The implementation must guarantee that [content] keys correspond to their value types.
  *
  * The following contracts are in place for this class:
- * * the type of item provided always the same the type-parameter of the attribute;
+ * * the type of item provided is always the same as the type-parameter of the attribute;
  * * content composition immutable (the same objects always correspond to the same keys, not guarantees about the content);
  * * structural equality.
  *
@@ -32,6 +32,9 @@ public interface Attributes {
      */
     @Suppress("UNCHECKED_CAST")
     public operator fun <T> get(attribute: Attribute<out T>): T? = content[attribute] as? T
+        ?: content.entries.firstNotNullOfOrNull { (key, value) ->
+            (key as Attribute<Any?>).implies(value)?.get(attribute)
+        }
 
     override fun toString(): String
     override fun equals(other: Any?): Boolean
@@ -71,6 +74,33 @@ public interface Attributes {
 @OptIn(UnsafeAPI::class)
 @PublishedApi
 internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) : Attributes {
+
+    init {
+
+        // resolve implications for the whale tree
+        fun impliedEntries(
+            content: Map<out Attribute<*>, Any?>
+        ): Collection<Map.Entry<Attribute<*>, Any?>> = buildList {
+            content.entries.forEach { entry ->
+                add(entry)
+                @Suppress("UNCHECKED_CAST")
+                val key = entry.key as Attribute<Any?>
+                val value = entry.value ?: return@forEach
+                val implied = key.implies(value) ?: return@forEach
+                addAll(impliedEntries(implied.content))
+            }
+        }
+
+        val implied = impliedEntries(content).groupBy { it.key }
+
+        implied.forEach { (key, values) ->
+            if (values.distinct().size > 1 && content[key] == null) {
+                error("Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value.")
+            }
+        }
+    }
+
+
     override fun toString(): String = "Attributes(value=${content.entries})"
     override fun equals(other: Any?): Boolean = other is Attributes && Attributes.equals(this, other)
     override fun hashCode(): Int = content.hashCode()

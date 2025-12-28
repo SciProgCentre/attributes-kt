@@ -3,8 +3,9 @@
 ## Unreleased
 
 ### Added
+- Attribute now can imply other attribute values. For example, a triangular matrix is automatically a triangular matrix.
 - attributes-kt-serialization advanced to `EXPERIMENTAL` support tier
-- unsafe attributes builder `Attributrs.unsafe`
+- unsafe attributes builder `Attributes.unsafe`
 
 ### Changed
 - Attributes `keys` moved to member API

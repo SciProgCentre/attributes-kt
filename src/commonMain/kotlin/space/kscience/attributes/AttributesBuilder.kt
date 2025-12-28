@@ -26,33 +26,10 @@ public class AttributesBuilder<out O> {
 
     @JvmName("set")
     public fun <V> put(attribute: Attribute<in V>, value: V?) {
-        val allValueInferences = buildMap<Attribute<*>, (() -> Any?)?> {
-            val attributesToCheck = mutableMapOf<Attribute<*>, (() -> Any?)?>(attribute to { value })
-            while (attributesToCheck.isNotEmpty()) {
-                val (nextAttribute, nextValue) = attributesToCheck.entries.first()
-                attributesToCheck.remove(nextAttribute)
-                this[nextAttribute] = nextValue
-                for ((newAttribute, newValue) in nextAttribute.implications) {
-                    @Suppress("UNCHECKED_CAST")
-                    newValue as (Any?) -> Any?
-                    when (newAttribute) {
-                        in this -> this[newAttribute] = null
-                        in attributesToCheck -> attributesToCheck[newAttribute] = null
-                        else -> attributesToCheck[newAttribute] = nextValue?.let { { newValue(it()) } }
-                    }
-                }
-            }
-        }
-        for ((attribute, inference) in allValueInferences) {
-            if (inference == null && attribute !in map) error("Attribute $attribute was implied several times and it is not put into the attributes container")
-            if (inference != null) {
-                val value = inference()
-                if (value == null) {
-                    map.remove(attribute)
-                } else {
-                    map[attribute] = value
-                }
-            }
+        if (value == null) {
+            map.remove(attribute)
+        } else {
+            map[attribute] = value
         }
     }
 

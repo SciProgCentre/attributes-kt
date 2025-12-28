@@ -6,11 +6,17 @@
 package space.kscience.attributes
 
 public interface Attribute<T> {
+
     /**
-     * Stores attributes that should be assigned when this attribute is assigned
-     * with mapping to get their corresponding values.
+     * Return an [Attributes] set that is automatically implied when this attribute is set.
+     *
+     * Implied attributes always have a lower priority than manual attributes. Meaning that if an attribute is implied and set,
+     * the set value will be used instead of the implied one.
+     *
+     * If several attributes imply the same attribute with different values and no manual attribute is set,
+     * the builder should produce an error.
      */
-    public val implications: Map<Attribute<*>, (T) -> Any?> get() = emptyMap()
+    public fun implies(value: T): Attributes? = null
 }
 
 /**
