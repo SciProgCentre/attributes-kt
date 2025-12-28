@@ -13,7 +13,7 @@ import kotlin.jvm.JvmName
  *
  * @param O type marker of an owner object, for which these attributes are made
  */
-public class AttributesBuilder<out O> internal constructor()  {
+public class AttributesBuilder<out O> {
 
     private val map = mutableMapOf<Attribute<*>, Any?>()
 
@@ -91,5 +91,5 @@ public class AttributesBuilder<out O> internal constructor()  {
  * Create [Attributes] with a given [builder]
  * @param O the type for which attributes are built. The type is used only during compilation phase for static extension dispatch
  */
-public fun <O> Attributes(builder: AttributesBuilder<O>.() -> Unit): Attributes =
+public inline fun <O> Attributes(builder: AttributesBuilder<O>.() -> Unit): Attributes =
     AttributesBuilder<O>().apply(builder).attributes()

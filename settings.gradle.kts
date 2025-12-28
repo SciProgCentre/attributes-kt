@@ -6,10 +6,10 @@ pluginManagement {
     val toolsVersion: String by extra
 
     repositories {
-        mavenLocal()
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.kotlin.link")
+//        mavenLocal()
     }
 
     plugins {
@@ -23,10 +23,10 @@ dependencyResolutionManagement {
     val toolsVersion: String by extra
 
     repositories {
-        mavenLocal()
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.kotlin.link")
+//        mavenLocal()
     }
 
     versionCatalogs {
