@@ -78,6 +78,27 @@ Generic modifications could be done via
 fun <O> Attributes.modified(block: AttributesBuilder<O>.() -> Unit): Attributes
 ```
 
+## Implications
+
+Each attribute key could imply other attributes. For example, a diagonal matrix always could be considered a triangular matrix.
+
+To provide implications, one need to implemnt `implies` method in the attribute key like this:
+
+```kotlin
+object AttributeA : Attribute<String> {
+    override fun implies(value: String): Attributes = Attributes(AttributeB, value)
+}
+```
+
+Implied attributes conflicts are resolved in the following way:
+* Implied values are resolved via `Attributes.get` operation if no explicit value is provided for the key.
+* Explicit value always overrides implied value.
+* If two attributes in a single `Attributes` set have conflicting values for the same key and no explicit value is provided for this key, 
+the builder should produce an error.
+
+Implied values could be checked via `implied` property of `Attributes`. This property does not include explicitly provided values.
+
+
 ## Polymorphic attributes
 
 Polymorphic attributes (attributes, where value has a type parameter) are more complicated. They could not be used as singleton keys since each key has a different parameter. Users may want to provide a key factory instead of keys themselves so they could organize key caching and avoid creating keys on each access:

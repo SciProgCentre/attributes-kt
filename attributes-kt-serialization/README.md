@@ -6,7 +6,7 @@ A generic serializer for attributes
 
 ## Artifact:
 
-The Maven coordinates of this project are `space.kscience:attributes-kt-serialization:0.3.0`.
+The Maven coordinates of this project are `space.kscience:attributes-kt-serialization:0.4.0`.
 
 **Gradle Kotlin DSL:**
 ```kotlin
@@ -16,6 +16,6 @@ repositories {
 }
 
 dependencies {
-    implementation("space.kscience:attributes-kt-serialization:0.3.0")
+    implementation("space.kscience:attributes-kt-serialization:0.4.0")
 }
 ```

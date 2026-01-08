@@ -11,7 +11,7 @@ description = "Type safe object attributes and builders for them"
 
 allprojects {
     group = "space.kscience"
-    version = "0.4.0-dev"
+    version = "0.4.0"
 }
 
 kscience {
