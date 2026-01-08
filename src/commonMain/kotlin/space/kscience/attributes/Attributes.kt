@@ -23,20 +23,17 @@ public interface Attributes {
     public val content: Map<out Attribute<*>, Any?>
 
     /**
-     * All values including implied ones
-     */
-    public val values: Map<out Attribute<*>, Any?>
-
-    /**
      * Attribute keys contained in this [Attributes]
      */
     public val keys: Set<Attribute<*>> get() = content.keys
 
     /**
-     * Provide an attribute value. Return null if an attribute is not present or if its value is null.
+     * Provide an attribute value or a value implied by a present value via [Attribute.implies].
+     *
+     * Return null if an attribute is not present or if its value is null.
      */
     @Suppress("UNCHECKED_CAST")
-    public operator fun <T> get(attribute: Attribute<out T>): T? = values[attribute] as? T
+    public operator fun <T> get(attribute: Attribute<out T>): T?
 
     override fun toString(): String
     override fun equals(other: Any?): Boolean
@@ -46,7 +43,7 @@ public interface Attributes {
         public val EMPTY: Attributes = object : Attributes {
             override val content: Map<out Attribute<*>, Any?> get() = emptyMap()
 
-            override val values: Map<out Attribute<*>, Any?> get() = emptyMap()
+            override fun <T> get(attribute: Attribute<out T>): T? = null
 
             override fun toString(): String = "Attributes.EMPTY"
 
@@ -79,18 +76,20 @@ public interface Attributes {
 @PublishedApi
 internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) : Attributes {
 
-    override val values: Map<out Attribute<*>, Any?> = buildMap {
+    private val implied = buildMap {
 
         fun putImplied(key: Attribute<*>, value: Any?) {
-            when (get(key)) {
-                null -> put(key, value)
-                value -> Unit
-                else -> {
-                    if (content[key] == null) {
-                        error("Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value.")
-                    }
-                }
+            //if the key does not have explicit value, try to put it
+            // do not process keys with explicit values
+            if (content[key] == null) {
+                when (get(key)) {
+                    null -> put(key, value) //put value if it is not present
+                    value -> Unit //do nothing if the same value already present
+                    else -> error(
+                        "Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value."
+                    ) //throw an error if the value is different
 
+                }
             }
             @Suppress("UNCHECKED_CAST")
             val implied = (key as Attribute<Any?>).implies(value) ?: return
@@ -102,11 +101,12 @@ internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) 
 
         content.forEach { (key, value) ->
             putImplied(key, value)
-            put(key, value)
         }
 
     }
 
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> get(attribute: Attribute<out T>): T? = (content[attribute] ?: implied[attribute]) as? T?
 
     override fun toString(): String = "Attributes(value=${content.entries})"
     override fun equals(other: Any?): Boolean = other is Attributes && Attributes.equals(this, other)
