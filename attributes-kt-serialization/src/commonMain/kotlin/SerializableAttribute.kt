@@ -32,12 +32,7 @@ public class AttributesSerializer(
 
             attr to value
         }
-        return object : Attributes {
-            override val content: Map<out Attribute<*>, Any?> = attributeMap
-            override fun toString(): String = "Attributes(value=${content.entries})"
-            override fun equals(other: Any?): Boolean = other is Attributes && Attributes.equals(this, other)
-            override fun hashCode(): Int = content.hashCode()
-        }
+        return Attributes.unsafe(attributeMap)
     }
 
     override fun serialize(encoder: Encoder, value: Attributes) {

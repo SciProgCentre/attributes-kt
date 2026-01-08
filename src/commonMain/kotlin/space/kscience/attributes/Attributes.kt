@@ -9,29 +9,40 @@ package space.kscience.attributes
  * A set of attributes. The implementation must guarantee that [content] keys correspond to their value types.
  *
  * The following contracts are in place for this class:
- * * the type of item provided always the same the type-parameter of the attribute;
+ * * the type of item provided is always the same as the type-parameter of the attribute;
  * * content composition immutable (the same objects always correspond to the same keys, not guarantees about the content);
  * * structural equality.
  *
  * It is not recommended to implement this interface in application level code to avoid breaking its contract.
+ *
+ * Attribute implications conflicts are checked during construction, so constructing [Attributes] could produce an error.
  */
 @SubclassOptInRequired(UnsafeAPI::class)
 public interface Attributes {
     /**
-     * Raw content for this [Attributes]
+     * Raw (explicit) content for this [Attributes]
      */
     public val content: Map<out Attribute<*>, Any?>
 
     /**
-     * Attribute keys contained in this [Attributes]
+     * Only implied values without explicit values.
+     *
+     * This property is mostly used for optimization purposes.
+     */
+    public val implied: Map<out Attribute<*>, Any?>
+
+    /**
+     * Explicit attribute keys contained in this [Attributes]
      */
     public val keys: Set<Attribute<*>> get() = content.keys
 
     /**
-     * Provide an attribute value. Return null if an attribute is not present or if its value is null.
+     * Provide an attribute value or a value implied by a present value via [Attribute.implies].
+     *
+     * Return null if an attribute is not present or if its value is null.
      */
     @Suppress("UNCHECKED_CAST")
-    public operator fun <T> get(attribute: Attribute<T>): T? = content[attribute] as? T
+    public operator fun <T> get(attribute: Attribute<out T>): T?
 
     override fun toString(): String
     override fun equals(other: Any?): Boolean
@@ -40,6 +51,10 @@ public interface Attributes {
     public companion object {
         public val EMPTY: Attributes = object : Attributes {
             override val content: Map<out Attribute<*>, Any?> get() = emptyMap()
+
+            override val implied: Map<out Attribute<*>, Any?> get() = emptyMap()
+
+            override fun <T> get(attribute: Attribute<out T>): T? = null
 
             override fun toString(): String = "Attributes.EMPTY"
 
@@ -71,6 +86,28 @@ public interface Attributes {
 @OptIn(UnsafeAPI::class)
 @PublishedApi
 internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) : Attributes {
+
+    override val implied = buildMap {
+        content.forEach { (key, value) ->
+            @Suppress("UNCHECKED_CAST")
+            val impliedPairs = (key as Attribute<Any?>).implies(value) ?: return@forEach
+
+            (impliedPairs.content + impliedPairs.implied).forEach { (impliedKey, impliedValue) ->
+                when (impliedKey) {
+                    in content -> Unit
+
+                    in this if get(impliedKey) != impliedValue ->
+                        error("Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value.")
+
+                    else -> put(impliedKey, impliedValue)
+                }
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> get(attribute: Attribute<out T>): T? = (content[attribute] ?: implied[attribute]) as? T?
+
     override fun toString(): String = "Attributes(value=${content.entries})"
     override fun equals(other: Any?): Boolean = other is Attributes && Attributes.equals(this, other)
     override fun hashCode(): Int = content.hashCode()
@@ -127,7 +164,8 @@ public inline fun <O> Attributes.modified(block: AttributesBuilder<O>.() -> Unit
 /**
  * Create new [Attributes] by removing [attribute] key if it is present
  */
-public fun Attributes.withoutAttribute(attribute: Attribute<*>): Attributes = AttributesMap(content.minus(attribute))
+public fun Attributes.withoutAttribute(attribute: Attribute<*>): Attributes =
+    AttributesMap(content.minus(attribute))
 
 /**
  * Add an element to a [SetAttribute]
