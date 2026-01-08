@@ -14,16 +14,25 @@ package space.kscience.attributes
  * * structural equality.
  *
  * It is not recommended to implement this interface in application level code to avoid breaking its contract.
+ *
+ * Attribute implications conflicts are checked during construction, so constructing [Attributes] could produce an error.
  */
 @SubclassOptInRequired(UnsafeAPI::class)
 public interface Attributes {
     /**
-     * Raw content for this [Attributes]
+     * Raw (explicit) content for this [Attributes]
      */
     public val content: Map<out Attribute<*>, Any?>
 
     /**
-     * Attribute keys contained in this [Attributes]
+     * Only implied values without explicit values.
+     *
+     * This property is mostly used for optimization purposes.
+     */
+    public val implied: Map<out Attribute<*>, Any?>
+
+    /**
+     * Explicit attribute keys contained in this [Attributes]
      */
     public val keys: Set<Attribute<*>> get() = content.keys
 
@@ -42,6 +51,8 @@ public interface Attributes {
     public companion object {
         public val EMPTY: Attributes = object : Attributes {
             override val content: Map<out Attribute<*>, Any?> get() = emptyMap()
+
+            override val implied: Map<out Attribute<*>, Any?> get() = emptyMap()
 
             override fun <T> get(attribute: Attribute<out T>): T? = null
 
@@ -76,33 +87,22 @@ public interface Attributes {
 @PublishedApi
 internal class AttributesMap(override val content: Map<out Attribute<*>, Any?>) : Attributes {
 
-    private val implied = buildMap {
+    override val implied = buildMap {
+        content.forEach { (key, value) ->
+            @Suppress("UNCHECKED_CAST")
+            val impliedPairs = (key as Attribute<Any?>).implies(value) ?: return@forEach
 
-        fun putImplied(key: Attribute<*>, value: Any?) {
-            //if the key does not have explicit value, try to put it
-            // do not process keys with explicit values
-            if (content[key] == null) {
-                when (get(key)) {
-                    null -> put(key, value) //put value if it is not present
-                    value -> Unit //do nothing if the same value already present
-                    else -> error(
-                        "Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value."
-                    ) //throw an error if the value is different
+            (impliedPairs.content + impliedPairs.implied).forEach { (impliedKey, impliedValue) ->
+                when (impliedKey) {
+                    in content -> Unit
 
+                    in this if get(impliedKey) != impliedValue ->
+                        error("Attribute $key is implied by multiple attributes with different values. Please resolve the conflict by providing explicit value.")
+
+                    else -> put(impliedKey, impliedValue)
                 }
             }
-            @Suppress("UNCHECKED_CAST")
-            val implied = (key as Attribute<Any?>).implies(value) ?: return
-
-            implied.content.forEach { (impliedKey, impliedValue) ->
-                putImplied(impliedKey, impliedValue)
-            }
         }
-
-        content.forEach { (key, value) ->
-            putImplied(key, value)
-        }
-
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -164,7 +164,8 @@ public inline fun <O> Attributes.modified(block: AttributesBuilder<O>.() -> Unit
 /**
  * Create new [Attributes] by removing [attribute] key if it is present
  */
-public fun Attributes.withoutAttribute(attribute: Attribute<*>): Attributes = AttributesMap(content.minus(attribute))
+public fun Attributes.withoutAttribute(attribute: Attribute<*>): Attributes =
+    AttributesMap(content.minus(attribute))
 
 /**
  * Add an element to a [SetAttribute]
